@@ -1,1 +1,374 @@
-test
+# Importing libraries
+import pandas as pd # for data handling
+import numpy as np # for numerical operations
+from sklearn.model_selection import train_test_split # for splitting data
+from sklearn.feature_extraction.text import TfidfVectorizer # for feature extraction
+from sklearn.linear_model import LogisticRegression # machine learning model
+from sklearn.neighbors import KNeighborsClassifier # another ML model
+from sklearn.metrics import accuracy_score, classification_report # for evaluation
+
+# For NLP specific tasks
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+# Install Arabic-specific resources
+nltk.download('punkt')
+nltk.download('stopwords')
+
+-------------------------------------------------------------------------
+from google.colab import files
+import pandas as pd
+
+uploaded = files.upload()
+
+# Use the actual filename from the uploaded dictionary
+filename = list(uploaded.keys())[0]  
+df = pd.read_csv(filename, encoding='utf-8')
+
+--------------------------------------------------------------------------
+# Load the dataset
+df = pd.read_csv('/content/twitter_vision2030_dataset.csv')
+
+# Inspect the first few rows
+print(df.head())
+
+---------------------------------------------------------------------------
+
+import re
+
+def clean_text(text):
+    # Remove URLs
+    text = re.sub(r'http\S+|www\S+', '', text)
+    # Remove mentions and hashtags
+    text = re.sub(r'@\w+|#\w+', '', text)
+    # Remove non-Arabic characters (if needed)
+    text = re.sub(r'[^\u0621-\u064A\s]', '', text)
+    return text
+
+# Apply cleaning to the "content" column (or your specific column name)
+df['cleaned_text'] = df['content'].apply(clean_text)
+
+import nltk # import the nltk library
+from nltk.corpus import stopwords # import the stopwords function from the nltk.corpus module
+
+nltk.download('stopwords') # download the stopwords
+
+print(stopwords.words('arabic'))
+
+--------------------------------------------------------------------------------
+
+print(stopwords.words('arabic'))
+
+-------------------------------------------------------------------------------
+
+df.head(5)
+
+-----------------------------------------------------------------------------
+
+import nltk # import the nltk library
+from nltk.corpus import stopwords # import the stopwords function from the nltk.corpus module
+from nltk.tokenize import word_tokenize # import the word_tokenize function from the nltk.tokenize module
+
+nltk.download('stopwords') # download the stopwords
+nltk.download('punkt') # download the punkt resource 
+
+# Tokenize and remove stopwords
+arabic_stopwords = set(stopwords.words("arabic"))
+
+def preprocess_text(text):
+    # Tokenize
+    words = word_tokenize(text)
+    # Remove stopwords
+    words = [word for word in words if word not in arabic_stopwords]
+    return ' '.join(words)
+
+df['processed_text'] = df['content'].apply(preprocess_text)
+
+----------------------------------------------------------------------------------
+
+# Tokenize and remove stopwords from the 'content' column
+def preprocess_text(text):
+    # Tokenize
+    words = word_tokenize(text)
+    # Remove stopwords
+    words = [word for word in words if word not in arabic_stopwords]
+    return ' '.join(words)
+
+# Apply preprocessing to the 'content' column
+df['processed_text'] = df['content'].apply(lambda x: preprocess_text(clean_text(x)))
+
+---------------------------------------------------------------------------------------
+
+print(df[['content', 'processed_text']].head())
+
+-------------------------------------------------------------------------------------
+
+def count_stopwords(original_text, processed_text):
+    original_tokens = word_tokenize(original_text)
+    processed_tokens = word_tokenize(processed_text)
+    return len(original_tokens) - len(processed_tokens)
+
+# Apply to a sample row
+df['stopwords_removed_count'] = df.apply(lambda row: count_stopwords(row['content'], preprocess_text(clean_text(row['content']))), axis=1)
+print(df[['content', 'processed_text', 'stopwords_removed_count']].head())
+
+-----------------------------------------------------------------------------------------
+
+# This code was likely not executed or had an error.
+# Make sure this cell is run before accessing the column
+def count_stopwords(original_text, processed_text):
+    original_tokens = word_tokenize(original_text)
+    processed_tokens = word_tokenize(processed_text)
+    return len(original_tokens) - len(processed_tokens)
+
+# Apply to a sample row
+df['stopwords_removed_count'] = df.apply(lambda row: count_stopwords(row['content'], preprocess_text(clean_text(row['content']))), axis=1)
+(df[['content', 'processed_text', 'stopwords_removed_count']].head())
+
+(df.stopwords_removed_count)
+
+---------------------------------------------------------------------------------------
+
+# Import the necessary module and class
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Convert text to numerical features using TF-IDF
+tfidf = TfidfVectorizer(max_features=5000) # You can adjust the max features
+
+# Fit and transform the "processed_text" column
+X = tfidf.fit_transform(df['processed_text']).toarray()
+
+# Check the shape of the result
+print(X.shape)
+
+--------------------------------------------------------------------------------------
+
+!pip install transformers
+from transformers import pipeline
+
+# Load a pre-trained sentiment analysis model for Arabic
+sentiment_pipeline = pipeline("sentiment-analysis", model="aubmindlab/bert-base-arabertv02")
+
+# Apply the model to the 'content' column
+df['sentiment'] = df['content'].apply(lambda x: sentiment_pipeline(x)[0]['label'])
+
+------------------------------------------------------------------------------------------
+
+# Count the occurrences of each sentiment label
+sentiment_counts = df['sentiment'].value_counts()
+
+print(sentiment_counts)
+
+------------------------------------------------------------------------------------------
+
+import matplotlib.pyplot as plt
+
+# Plot sentiment distribution
+sentiment_counts.plot(kind='bar')
+plt.xlabel('Sentiment')
+plt.ylabel('Number of Tweets')
+plt.title('Distribution of Sentiments')
+plt.show()
+
+-------------------------------------------------------------------------------------------
+
+from sklearn.model_selection import train_test_split
+
+# Assuming you have features and labels
+X = df['processed_text'] # Features
+y = df['sentiment'] # Labels
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+----------------------------------------------------------------------------------------
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, classification_report
+
+-----------------------------------------------------------------------------------------
+
+#check data types
+print(type(X_train))
+print(type(X_test))
+print(type(y_train))
+print(type(y_test))
+
+------------------------------------------------------------------------------------------
+
+# print sample values 
+print("sample X_train:", X_train.head())
+print("sample X_test:", X_test.head())
+print("sample y_train:", y_train.head())
+print("sample y_test:", y_test.head())
+
+---------------------------------------------------------------------------------------
+
+# check Dimensions shape(number of rows, number of column)
+print("X_train shape:", X_train.shape)
+print("X_test shape:", X_test.shape)
+print("y_train shape:" ,y_train.shape)
+print("y_test shape:", y_test.shape)
+
+---------------------------------------------------------------------------------------
+
+# Create a pipeline with TF-IDF and Logistic Regression
+logreg_pipeline = Pipeline([
+('tfidf', TfidfVectorizer()),
+('clf', LogisticRegression())
+])
+
+# Train the Logistic Regression model
+logreg_pipeline.fit(X_train, y_train)
+
+--------------------------------------------------------------------------------------
+
+# Make predictions with Logistic Regression
+y_pred_logreg = logreg_pipeline.predict(X_test)
+
+# Evaluate the Logistic Regression model
+print("Logistic Regression Accuracy:", accuracy_score(y_test, y_pred_logreg))
+print(classification_report(y_test, y_pred_logreg))
+
+--------------------------------------------------------------------------------------
+
+# accuracy score on the training data
+X_train_predication = logreg_pipeline.predict(X_train) # Use logreg_pipeline instead of model
+training_data_accuracy = accuracy_score(y_train, X_train_predication) # Also corrected y_train_train to y_train
+--------------------------------------------------------------------------------------
+
+print('Accuracy score on the training data :', training_data_accuracy)
+
+---------------------------------------------------------------------------------------
+
+# accuracy score on the test data
+X_test_predication = logreg_pipeline.predict(X_test) # Use logreg_pipeline instead of model
+test_data_accuracy = accuracy_score(y_test, X_test_predication)
+
+-----------------------------------------------------------------------------------------
+
+print('Accuracy score on the test data :', test_data_accuracy)
+
+------------------------------------------------------------------------------------------
+
+# Create a pipeline with TF-IDF and KNN
+knn_pipeline = Pipeline([
+('tfidf', TfidfVectorizer()),
+('clf', KNeighborsClassifier())
+])
+
+# Train the KNN model
+knn_pipeline.fit(X_train, y_train)
+
+--------------------------------------------------------------------------------------------
+
+# Make predictions with KNN
+y_pred_knn = knn_pipeline.predict(X_test)
+
+# Evaluate the KNN model
+print("KNN Accuracy:", accuracy_score(y_test, y_pred_knn))
+print(classification_report(y_test, y_pred_knn))
+
+--------------------------------------------------------------------------------------------
+
+# accuracy score on the training data
+X_train_predication = knn_pipeline.predict(X_train) # Use logreg_pipeline instead of model
+training_data_accuracy = accuracy_score(y_train, X_train_predication) # Also corrected y_train_train to y_train
+
+----------------------------------------------------------------------------------------------
+
+print('Accuracy score on the training data :', training_data_accuracy)
+
+----------------------------------------------------------------------------------------------
+
+# accuracy score on the test data
+X_test_predication = knn_pipeline.predict(X_test) # Use logreg_pipeline instead of model
+test_data_accuracy = accuracy_score(y_test, X_test_predication)
+
+--------------------------------------------------------------------------------------------------
+
+print('Accuracy score on the test data :', test_data_accuracy)
+
+--------------------------------------------------------------------------------------------------
+
+!pip install scikit-learn
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# Assuming you have your features in 'X' and labels in 'y'
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) 
+
+# Create a TfidfVectorizer instance
+vectorizer = TfidfVectorizer()
+
+# Fit the vectorizer on the training data and transform it
+X_train_vec = vectorizer.fit_transform(X_train)
+
+# Transform the test data using the same vectorizer
+X_test_vec = vectorizer.transform(X_test)
+
+# Create a DecisionTreeClassifier instance
+dt_classifier = DecisionTreeClassifier()
+
+# Train the model on the transformed training data
+dt_classifier.fit(X_train_vec, y_train)
+
+----------------------------------------------------------------------------------------------------------
+
+y_pred = dt_classifier.predict(X_test_vec) # Use the transformed test data for prediction
+print(y_pred)
+
+-----------------------------------------------------------------------------------------------------------
+
+from sklearn.metrics import accuracy_score, classification_report
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy}")
+
+-------------------------------------------------------------------------------------------------------------
+
+# Example tweet for prediction
+new_tweet = " انا رائع"
+
+# Preprocess the tweet (same steps as before)
+new_tweet_processed = preprocess_text(clean_text(new_tweet))
+
+# Predict using Logistic Regression (or KNN)
+# Ensure logreg_pipeline is fit before predicting.
+# Pass the preprocessed tweet directly to the pipeline
+predicted_sentiment = logreg_pipeline.predict([new_tweet_processed]) 
+#predicted_sentiment=knn_pipeline.predict([new_tweet_processed])
+
+print("Predicted Sentiment:", predicted_sentiment)
+
+------------------------------------------------------------------------------------------------------------------
+
+# Example tweet for prediction
+new_tweet = " انا سعيد"
+
+# Preprocess the tweet (same steps as before)
+new_tweet_processed = preprocess_text(clean_text(new_tweet))
+
+# Assuming 'tfidf' is the name of your TF-IDF vectorizer in the pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+tfidf = TfidfVectorizer() 
+
+# Fit the vectorizer to your training data if you haven't already
+# Replace 'X_train' with your training data
+tfidf.fit(X_train) 
+
+# Transform the processed tweet using the fitted vectorizer
+new_tweet_transformed = tfidf.transform([new_tweet_processed])
+
+# Predict using the Decision Tree classifier
+predicted_sentiment = dt_classifier.predict(new_tweet_transformed)
+print("Predicted Sentiment:", predicted_sentiment)
+
+------------------------------------------------------------------------------------------------------------------
